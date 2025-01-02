@@ -1,0 +1,79 @@
+@startuml diagramme
+
+class Client {
+  + ObjectId _id
+  + String nom
+  + String prenom
+  + String email
+  + String motDePasse
+  + String pays
+  + String ville
+  + String quartier
+  + List<Facture> factures
+  + List<String> notifications
+  + evaluatePrestation(Prestation prestation, String commentaire, int note)
+}
+
+class Prestataire {
+  + ObjectId _id
+  + String nomEntreprise
+  + String nomResponsable
+  + String email
+  + String motDePasse
+  + String typePrestataire  // société, startup, particulier
+  + String localisation
+  + List<Prestation> prestations
+  + List<Evaluation> evaluations
+  + boolean estValide
+  + genererFacture(Client client, Prestation prestation, double montant)
+}
+
+class Prestation {
+  + ObjectId _id
+  + String nom
+  + String description
+  + double prix
+  + String localisation
+  + List<String> images
+  + boolean estDisponible
+}
+
+class Facture {
+  + ObjectId _id
+  + Client client
+  + Prestataire prestataire
+  + Prestation prestation
+  + double montant
+  + Date dateCreation
+  + String modePaiement // wallet, espèce
+}
+
+class Admin {
+  + ObjectId _id
+  + String nom
+  + String email
+  + String motDePasse
+  + gererComptes()
+  + validerPrestation(Prestation prestation)
+  + consulterStatistiques()
+}
+
+class Evaluation {
+  + ObjectId _id
+  + Client client
+  + Prestataire prestataire
+  + String commentaire
+  + int note // 1 à 5 étoiles
+}
+
+Client "1" -- "*" Facture
+Prestataire "1" -- "*" Prestation
+Prestataire "1" -- "*" Evaluation
+Client "1" -- "*" Evaluation
+Facture "1" -- "1" Prestation
+Facture "1" -- "1" Client
+Facture "1" -- "1" Prestataire
+Admin "1" -- "*" Prestataire
+Admin "1" -- "*" Prestation
+
+@enduml
