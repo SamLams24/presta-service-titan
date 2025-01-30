@@ -1,0 +1,170 @@
+les models : 
+const mongoose = require('mongoose');
+
+const clientSchema = new mongoose.Schema({
+    nom: {type:String, required: true},
+    prenom: {type: String, required: true},
+    email: { type: String, required: true, unique: true},
+    motDePasse: { type: String, required: true },
+    pays: String,
+    ville: String,
+    quartier: String,
+    factures: [{type: mongoose.Schema.Types.ObjectId, ref: 'Facture'}],
+    notifications: [String],
+
+},
+{ timestamps: true });
+
+module.exports = mongoose.model('Client', clientSchema);
+
+const mongoose = require('mongoose');
+
+const evaluationSchema = new mongoose.Schema({
+  client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
+  prestataire: { type: mongoose.Schema.Types.ObjectId, ref: 'Prestataire', required: true },
+  commentaire: { type: String, required: true },
+  note: { type: Number, min: 1, max: 5, required: true },
+}, { timestamps: true });
+
+module.exports = mongoose.model('Evaluation', evaluationSchema);
+
+const mongoose = require('mongoose');
+
+const factureSchema = new mongoose.Schema({
+    client: {type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true},
+    prestataire: {type: mongoose.Schema.Types.ObjectId, ref: 'Prestataire', required: true},
+    prestation: {type: mongoose.Schema.Types.ObjectId, ref: 'Prestation', required: true},
+    montant: { type: Number, required: true},
+    dateCreation: { type: Date, default: Date.now },
+    modePaiement: {type: String, enum: ['wallet', 'espèce'], required: true},
+
+}, 
+{ timestamps: true});
+
+module.exports = mongoose.model('Facture', factureSchema);
+
+const mongoose = require('mongoose');
+
+const prestataireSchema = new mongoose.Schema( {
+    nomEntreprise: { type: String, required: true}, 
+    nomResponsable: {type: String, required: true }, 
+    email: { type: String, required: true, unique: true},
+    motDePasse: { type: String, required: true }, 
+    typePrestataire: { type: String, enum: ['Société', 'startup', 'particulier', 'autres'], required: true},
+    localisation: { type: String, required: true },
+    prestations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Prestation'}],
+    evaluations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Evaluation'}],
+    estValide: { type: Boolean, default: false },
+
+
+},
+{ timestamps : true});
+
+module.exports = mongoose.model('Prestataire', prestataireSchema);
+
+const mongoose = require('mongoose'); 
+const Prestataire = require('./Prestataire');
+
+const prestationSchema = new mongoose.Schema( {
+    nom: {type: String, required: true},
+    description: { type: String, required: true},
+    prix: { type: Number, required: true},
+    localisation: { type: String, required: true},
+    images: [String],
+    estDisponible: {type: Boolean, default:true }, 
+    prestataire: { type: mongoose.Schema.Types.ObjectId, ref: 'Prestataire', required: true },
+
+}, {timestamps: true});
+
+module.exports = mongoose.model('Prestation', prestationSchema);
+
+Les Routes
+
+const express= require('express');
+const router = express.Router();
+const clientController = require('../controllers/clientController');
+
+//Routes pour les Clients
+
+router.post('/', clientController.createClient);
+router.get('/', clientController.getAllClients);
+router.get('/:id', clientController.getClientById);
+router.put('/:id', clientController.updateClient);
+router.delete('/:id', clientController.deleteClient);
+
+module.exports = router;
+
+const express = require('express');
+const router = express.Router();
+const factureController = require('../controllers/factureController');
+
+// Routes pour les factures
+router.post('/', factureController.createFacture); // Créer une facture
+router.get('/', factureController.getAllFactures); // Obtenir toutes les factures
+
+module.exports = router;
+
+
+const express = require('express');
+const router = express.Router();
+const prestataireController = require('../controllers/prestataireController');
+
+// Routes pour les prestataires
+router.post('/', prestataireController.createPrestataire); // Créer un prestataire
+router.get('/', prestataireController.getAllPrestataires); // Obtenir tous les prestataires
+router.get('/:id', prestataireController.getPrestataireById); // Obtenir un prestataire par ID
+router.put('/:id', prestataireController.updatePrestataire); // Mettre à jour un prestataire
+router.delete('/:id', prestataireController.deletePrestataire); // Supprimer un prestataire
+
+module.exports = router;
+
+
+const express = require('express');
+const router = express.Router();
+const prestationController = require('../controllers/prestationController');
+
+// Routes pour les prestations
+router.post('/', prestationController.createPrestation); // Créer une prestation
+router.get('/', prestationController.getAllPrestations); // Obtenir toutes les prestations
+
+module.exports = router;
+
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const connectDb = require('./src/config/database');
+const clientRoutes = require("./src/routes/clientRoutes");
+const prestataireRoutes = require('./src/routes/prestataireRoutes');
+const prestationRoutes = require('./src/routes/prestationRoutes');
+const factureRoutes = require('./src/routes/factureRoutes');
+
+//initialisation de l'app
+const app = express();
+const PORT = process.env.PORT || 5000 ; 
+
+
+
+//Middlewares
+app.use(cors());
+app.use(bodyParser.json());
+
+// Autres Middlewares
+// Routes API 
+app.use('/api/clients', clientRoutes);
+app.use('/api/prestataires', prestataireRoutes);
+app.use('/api/prestations', prestationRoutes);
+app.use('/api/factures', factureRoutes);
+
+//Connexion a la DB mongo
+
+connectDb();
+
+//Routes
+app.get('/', (req, res) => {
+    res.send("API Presta-Service en cours d'execution !!");
+});
+
+app.listen(PORT , ()=> {
+    console.log(`Serveur en écoute sur le port ${PORT}`);
+})

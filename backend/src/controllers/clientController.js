@@ -124,3 +124,21 @@ exports.getAllClients = async (req, res) => {
       res.status(500).json({ message: "Erreur lors de la récupération des clients.", error: error.message });
     }
   };
+
+exports.loginClient = async (req, res) => {
+    try {
+        const {email, motDePasse} = req.body;
+        const client = await Client.findOne({ email });
+        if(!client) return  res.status(400).json({ message: "Client non trouvé" });
+
+        const isMatch = await bcrypt.compare(motDePasse, client.motDePasse);
+        if (!isMatch) return res.status(400).json({ message: "Mot de passe incorrect" });
+
+        const token = jwt.sign({ id: client._id, role: "client" }, process.env.JWT_SECRET, { expiresIn: "1d" });
+
+        res.json({ token, client });
+    } catch (err) {
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+    
+};
